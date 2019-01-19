@@ -25,13 +25,22 @@ function draw() {
 }
 */
 
+const backgroundColor = 200;
+
 function setup() {
   createCanvas(320,200);
   frameRate(10)
+
+  mic = new p5.AudioIn();
+  mic.start();
+  fft = new p5.FFT(0.8, 32);
+  fft.setInput(mic);
 }
 
 function draw() {
-  background(200);
+  background(backgroundColor);
+
+  let spectrum = fft.analyze();
 
   let step = 10
   let lines: p5.Vector[][] = []
@@ -40,24 +49,52 @@ function draw() {
   for (let i = step; i <= this.width - step; i += step) {
     let line: p5.Vector[] = []
 
-    for (let j = step; j <= this.width - step; j += step) {
-      // let r = random(0,10)
+    let sv = map(spectrum[i/step], 0, 255, 0, 2);
+
+    for (let j = 0; j <= this.width; j += step) {
       let distanceToCenter = Math.abs(j - this.width / 2)
       let variance = Math.max(this.width / 2 - 50 - distanceToCenter, 0);
-      let r = Math.random() * variance / 2 * -1;
+
+      let r = sv*noise(i + frameCount/10.0, j + frameCount / 10.0) * variance / 2 * -1;
 
       line.push(createVector(j, i + r))
     }
+    // console.log(`n=${i} sv=${sv}`)
     lines.push(line)
   }
 
+  // console.log(`lines=${lines.length}`);
+
   // actually do the drawing
   stroke(0)
-  for (let i = 0; i < lines.length; i++) {
-    for (let j = 0; j < lines[i].length-1; j++) {
-      const p1 = lines[i][j]
-      const p2 = lines[i][j+1]
-      line(p1.x, p1.y, p2.x, p2.y)
+  fill(backgroundColor)
+
+  for (let i = 0; i < lines.length-12; i++) {
+
+    beginShape()
+
+    //let yy = lines[i].y
+    //vertex(-10, yy) // A
+
+    vertex(0, this.height) // D
+    //vertex(0, yy)
+    
+    for (let cnt = 0; cnt < lines[i].length; cnt++) {
+      let p = lines[i][cnt]
+      if(cnt <= 3 || cnt > lines[i].length-3) {
+        vertex(p.x, p.y)
+      }
+      else {
+        curveVertex(p.x, p.y)
+      }
     }
+  
+    //vertex(this.width, yy)
+    //vertex(this.width, yy) // B
+    vertex(this.width, this.height) // C
+    
+
+    endShape(CLOSE)
   }
 }
+
