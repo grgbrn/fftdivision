@@ -25,11 +25,19 @@ function draw() {
 }
 */
 
-const backgroundColor = 200;
+let colorStep = 0
+let backgroundColors: p5.Color[]
 
 function setup() {
   createCanvas(320,200);
   frameRate(10)
+  colorMode(HSB)
+
+  backgroundColors = [
+    color("#292458"),
+    color("#3a748b"),
+    color("#2c5158")
+  ]
 
   mic = new p5.AudioIn();
   mic.start();
@@ -38,7 +46,17 @@ function setup() {
 }
 
 function draw() {
-  background(backgroundColor);
+  // need to clamp colorStep from 0->1
+  colorStep += 0.01
+  if (colorStep > 1) {
+    colorStep = 0.0
+    // pop the first color off the array and move it to the end
+    let tmp = backgroundColors.shift()
+    backgroundColors.push(tmp)
+  }
+  let backgroundColor = lerpColor(backgroundColors[0], backgroundColors[1], colorStep)
+  background(backgroundColor)
+  // end background color morph
 
   let spectrum = fft.analyze();
 
@@ -66,7 +84,7 @@ function draw() {
   // console.log(`lines=${lines.length}`);
 
   // actually do the drawing
-  stroke(0)
+  stroke(255)
   fill(backgroundColor)
 
   for (let i = 0; i < lines.length-12; i++) {
@@ -92,9 +110,7 @@ function draw() {
     //vertex(this.width, yy)
     //vertex(this.width, yy) // B
     vertex(this.width, this.height) // C
-    
 
     endShape(CLOSE)
   }
 }
-
