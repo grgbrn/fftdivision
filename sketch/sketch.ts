@@ -1,57 +1,45 @@
-let mic: p5.AudioIn
-let fft: p5.FFT
-
-/*
-function setup() {
-  createCanvas(710,400);
-  noFill();
-
-  mic = new p5.AudioIn();
-  mic.start();
-  fft = new p5.FFT();
-  fft.setInput(mic);
-}
-
-function draw() {
-  background(200);
-
-  var spectrum = fft.analyze();
-
-  beginShape();
-  for (let i = 0; i<spectrum.length; i++) {
-   vertex(i, map(spectrum[i], 0, 255, height, 0) );
-  }
-  endShape();
-}
-*/
-
+let mic: p5.AudioIn;
+let fft: p5.FFT;
+let step = 40;
+let yellowLine = 0;
 const backgroundColor = 200;
+let fs = false;
 
 function setup() {
-  createCanvas(320,200);
+  createCanvas(1000, 800);
   frameRate(10)
 
   mic = new p5.AudioIn();
   mic.start();
   fft = new p5.FFT(0.8, 32);
   fft.setInput(mic);
-}
 
+  stroke(0);
+  strokeWeight(5);
+  fill(backgroundColor);
+}
+function mousePressed() {
+  let fs = fullscreen();
+  fullscreen(!fs);
+}
 function draw() {
   background(backgroundColor);
-
+  if(frameCount % 30 == 1){
+    yellowLine = int(random(this.width / step) - 3);
+  }
   let spectrum = fft.analyze();
-
-  let step = 10
+  
+  
   let lines: p5.Vector[][] = []
 
   // set up the lines (maybe in setup instead?)
-  for (let i = step; i <= this.width - step; i += step) {
+  for (let i = 2*step; i <= this.width - step; i += step) {
     let line: p5.Vector[] = []
 
-    let sv = map(spectrum[i/step], 0, 255, 0, 2);
-
+    let sv = map(spectrum[i/step], 0, 255, 0, step / 8);
+  
     for (let j = 0; j <= this.width; j += step) {
+      
       let distanceToCenter = Math.abs(j - this.width / 2)
       let variance = Math.max(this.width / 2 - 50 - distanceToCenter, 0);
 
@@ -59,42 +47,26 @@ function draw() {
 
       line.push(createVector(j, i + r))
     }
-    // console.log(`n=${i} sv=${sv}`)
+    
     lines.push(line)
   }
 
-  // console.log(`lines=${lines.length}`);
-
   // actually do the drawing
-  stroke(0)
-  fill(backgroundColor)
 
-  for (let i = 0; i < lines.length-12; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if(yellowLine == i) {
+      stroke(250, 201, 1)
+    }
 
     beginShape()
-
-    //let yy = lines[i].y
-    //vertex(-10, yy) // A
-
     vertex(0, this.height) // D
-    //vertex(0, yy)
-    
     for (let cnt = 0; cnt < lines[i].length; cnt++) {
       let p = lines[i][cnt]
-      if(cnt <= 3 || cnt > lines[i].length-3) {
-        vertex(p.x, p.y)
-      }
-      else {
-        curveVertex(p.x, p.y)
-      }
+      curveVertex(p.x, p.y)
     }
-  
-    //vertex(this.width, yy)
-    //vertex(this.width, yy) // B
     vertex(this.width, this.height) // C
-    
-
     endShape(CLOSE)
+    stroke(0);
   }
 }
 
